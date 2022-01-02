@@ -11,7 +11,7 @@ import (
 type Handler struct {
 	service *service.Service
 }
-type URL struct {
+type ShortURL struct {
 	URL string `json:"url"`
 }
 type Result struct {
@@ -52,12 +52,12 @@ func (h *Handler) HandlerPostJSON(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Not allowed content-type"})
 		return
 	}
-	var Url URL
-	if err := c.ShouldBindJSON(&Url); err != nil {
+	var ShortURL ShortURL
+	if err := c.ShouldBindJSON(&ShortURL); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	id := h.service.SaveURL(Url.URL)
+	id := h.service.SaveURL(ShortURL.URL)
 	longURL := "http://localhost:8080/" + id
 	var result Result
 	result.Result = longURL

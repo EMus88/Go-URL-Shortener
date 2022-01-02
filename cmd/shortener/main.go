@@ -14,6 +14,7 @@ func main() {
 	s := service.NewService(r)
 	h := handler.NewHandler(s)
 
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.GET("/:id", h.HandlerGet)
 	router.POST("/", h.HandlerPostText)
