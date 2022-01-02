@@ -5,25 +5,25 @@ import (
 	"github.com/EMus88/go-musthave-shortener-tpl/pkg/idgenerator"
 )
 
-type Repositiries interface {
-	SaveURLtoStorage(key string, value string)
-	GetURLfromStorage(id string) string
+type Repository interface {
+	SaveURL(key string, value string)
+	GetURL(id string) string
 }
 type Service struct {
-	Repositiries
+	Repository
 }
 
 func NewService(repos *repository.URLStorage) *Service {
-	return &Service{Repositiries: repos}
+	return &Service{Repository: repos}
 }
 
 func (s *Service) SaveURL(value string) string {
 	key := idgenerator.CreateID()
-	s.Repositiries.SaveURLtoStorage(key, value)
+	s.Repository.SaveURL(key, value)
 	return key
 }
 
 func (s *Service) GetURL(key string) string {
-	value := s.Repositiries.GetURLfromStorage(key)
+	value := s.Repository.GetURL(key)
 	return value
 }

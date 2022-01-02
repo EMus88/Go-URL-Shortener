@@ -16,7 +16,8 @@ func main() {
 
 	router := gin.Default()
 	router.GET("/:id", h.HandlerGet)
-	router.POST("/", h.HandlerPost)
+	router.POST("/", h.HandlerPostText)
+	router.POST("api/shorten", h.HandlerPostJSON)
 	router.NoRoute(func(c *gin.Context) { c.String(http.StatusBadRequest, "Not allowed requset") })
 
 	router.Run("localhost:8080")

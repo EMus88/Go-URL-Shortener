@@ -12,7 +12,7 @@ import (
 	"github.com/magiconair/properties/assert"
 )
 
-func TestHandler_HandlerPost(t *testing.T) {
+func TestHandler_HandlerPostText(t *testing.T) {
 	type want struct {
 		statusCode int
 	}
@@ -44,7 +44,7 @@ func TestHandler_HandlerPost(t *testing.T) {
 			h := NewHandler(s)
 
 			router := gin.Default()
-			router.POST("/", h.HandlerPost)
+			router.POST("/", h.HandlerPostText)
 
 			req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(tt.requestBody))
 			w := httptest.NewRecorder()
