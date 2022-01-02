@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -49,7 +50,8 @@ func (h *Handler) HandlerPostJSON(c *gin.Context) {
 		return
 	}
 	var ShortURL ShortURL
-	if err := c.ShouldBindJSON(&ShortURL); err != nil {
+	jsonData, _ := ioutil.ReadAll(c.Request.Body)
+	if err := json.Unmarshal(jsonData, &ShortURL); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
