@@ -34,10 +34,6 @@ func (h *Handler) HandlerGet(c *gin.Context) {
 }
 
 func (h *Handler) HandlerPostText(c *gin.Context) {
-	if c.GetHeader("content-type") != "text/plain" {
-		c.String(http.StatusBadRequest, "Not allowed content-type")
-		return
-	}
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil || len(body) == 0 {
 		c.Status(http.StatusBadRequest)
