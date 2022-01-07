@@ -36,6 +36,7 @@ func TestHandler_HandlerPostText(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
@@ -48,7 +49,6 @@ func TestHandler_HandlerPostText(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(tt.requestBody))
 			w := httptest.NewRecorder()
-			//w.Header().Set("content-type", "text/plain")
 			req.Header.Set("content-type", "text/plain")
 			router.ServeHTTP(w, req)
 			result := w.Result()
