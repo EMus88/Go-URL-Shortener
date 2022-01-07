@@ -3,10 +3,13 @@ package handler
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/app/service"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 type Handler struct {
@@ -41,7 +44,11 @@ func (h *Handler) HandlerPostText(c *gin.Context) {
 		return
 	}
 	id := h.service.SaveURL(string(body))
-	c.String(http.StatusCreated, "http://localhost:8080/"+id)
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("error loading env variables: %s", err.Error())
+	}
+	baseURL := os.Getenv("BASE_URL")
+	c.String(http.StatusCreated, baseURL+id)
 
 }
 func (h *Handler) HandlerPostJSON(c *gin.Context) {
@@ -56,7 +63,12 @@ func (h *Handler) HandlerPostJSON(c *gin.Context) {
 		return
 	}
 	id := h.service.SaveURL(ShortURL.URL)
-	longURL := "http://localhost:8080/" + id
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("error loading env variables: %s", err.Error())
+	}
+	baseURL := os.Getenv("BASE_URL")
+
+	longURL := baseURL + id
 	var result Result
 	result.Result = longURL
 	c.JSON(http.StatusCreated, result)
