@@ -43,7 +43,8 @@ func (h *Handler) HandlerPostText(c *gin.Context) {
 	}
 	id := h.service.SaveURL(string(body))
 	baseURL := os.Getenv("BASE_URL")
-	c.String(http.StatusCreated, baseURL+id)
+	port := ":8080"
+	c.String(http.StatusCreated, baseURL+port+"/"+id)
 
 }
 func (h *Handler) HandlerPostJSON(c *gin.Context) {
@@ -59,7 +60,8 @@ func (h *Handler) HandlerPostJSON(c *gin.Context) {
 	}
 	id := h.service.SaveURL(ShortURL.URL)
 	baseURL := os.Getenv("BASE_URL")
-	longURL := baseURL + id
+	port := ":8080"
+	longURL := baseURL + port + "/" + id
 	var result Result
 	result.Result = longURL
 	c.JSON(http.StatusCreated, result)
