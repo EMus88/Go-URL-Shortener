@@ -7,6 +7,7 @@ import (
 
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/app/service"
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/repository"
+	"github.com/EMus88/go-musthave-shortener-tpl/internal/repository/models/file"
 	"github.com/gin-gonic/gin"
 	"github.com/magiconair/properties/assert"
 )
@@ -52,8 +53,9 @@ func TestHandler_HandlerGet(t *testing.T) {
 			storage := repository.NewStorage()
 			storage.SaveURL("yandex", "https://yandex.ru/search/?text=go&lr=11351&clid=9403")
 			storage.SaveURL("wiki", "https://ru.wikipedia.org/wiki/Go")
+			var model file.Model
 
-			s := service.NewService(storage)
+			s := service.NewService(storage, &model)
 			h := NewHandler(s)
 
 			router := gin.Default()

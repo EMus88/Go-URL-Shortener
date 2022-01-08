@@ -8,6 +8,7 @@ import (
 
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/app/service"
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/repository"
+	"github.com/EMus88/go-musthave-shortener-tpl/internal/repository/models/file"
 	"github.com/gin-gonic/gin"
 	"github.com/magiconair/properties/assert"
 )
@@ -40,8 +41,10 @@ func TestHandler_HandlerPostText(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
+			var model file.Model
+
 			r := repository.NewStorage()
-			s := service.NewService(r)
+			s := service.NewService(r, &model)
 			h := NewHandler(s)
 
 			router := gin.Default()

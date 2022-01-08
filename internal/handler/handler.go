@@ -44,7 +44,6 @@ func (h *Handler) HandlerPostText(c *gin.Context) {
 	id := h.service.SaveURL(string(body))
 	baseURL := os.Getenv("BASE_URL")
 	c.String(http.StatusCreated, baseURL+"/"+id)
-
 }
 func (h *Handler) HandlerPostJSON(c *gin.Context) {
 	if c.GetHeader("content-type") != "application/json" {
