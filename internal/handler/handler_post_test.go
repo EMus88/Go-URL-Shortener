@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,6 +11,7 @@ import (
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/repository"
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/repository/models/file"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/magiconair/properties/assert"
 )
 
@@ -37,17 +39,21 @@ func TestHandler_HandlerPostText(t *testing.T) {
 			},
 		},
 	}
-
+	//load env variables
+	if err := godotenv.Load("/omhe/emus/Рабочий стол/Yandex/go-musthave-shortener-tpl/.env"); err != nil {
+		log.Fatalf("error loading env variables: %s", err.Error())
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
 			var model file.Model
-
 			r := repository.NewStorage()
 			s := service.NewService(r, &model)
 			h := NewHandler(s)
 
+			gin.SetMode(gin.ReleaseMode)
 			router := gin.Default()
+
 			router.POST("/", h.HandlerPostText)
 
 			req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(tt.requestBody))
