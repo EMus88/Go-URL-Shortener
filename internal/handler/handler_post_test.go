@@ -40,8 +40,10 @@ func TestHandler_HandlerPostText(t *testing.T) {
 		},
 	}
 	//load env variables
-	if err := godotenv.Load("/omhe/emus/Рабочий стол/Yandex/go-musthave-shortener-tpl/.env"); err != nil {
-		log.Fatalf("error loading env variables: %s", err.Error())
+	if err := godotenv.Load(); err != nil {
+		if err := godotenv.Load("/home/emus/Рабочий стол/Yandex/go-musthave-shortener-tpl/.env"); err != nil {
+			log.Fatalf("error loading env variables: %s", err.Error())
+		}
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
