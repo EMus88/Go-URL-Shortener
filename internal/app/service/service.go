@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/EMus88/go-musthave-shortener-tpl/configs"
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/repository"
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/repository/models/file"
 	"github.com/EMus88/go-musthave-shortener-tpl/pkg/idgenerator"
@@ -17,20 +18,21 @@ type Repository interface {
 }
 type Service struct {
 	Repository
-	Model file.Model
+	Model  file.Model
+	Config configs.Config
 }
 
-func NewService(repos *repository.URLStorage, model *file.Model) *Service {
-	return &Service{Repository: repos, Model: *model}
+func NewService(repos *repository.URLStorage, model *file.Model, config *configs.Config) *Service {
+	return &Service{Repository: repos, Model: *model, Config: *config}
 }
 
+//save long URL in stotage and return short URL
 func (s *Service) SaveURL(value string) string {
 	//save to map
 	key := idgenerator.CreateID()
 	s.Repository.SaveURL(key, value)
 	//save to file
-	path := os.Getenv("FILE_STORAGE_PATH")
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
+	file, err := os.OpenFile(s.Config.FileStoragePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,15 +49,16 @@ func (s *Service) SaveURL(value string) string {
 	return key
 }
 
+//get long URL from stotage by short URL
 func (s *Service) GetURL(key string) string {
 	value := s.Repository.GetURL(key)
 	return value
 }
 
 func (s *Service) LoadFromFile() {
+
 	var model file.Model
-	path := os.Getenv("FILE_STORAGE_PATH")
-	file, err := os.ReadFile(path)
+	file, err := os.ReadFile(s.Config.FileStoragePath)
 	if err != nil {
 		return
 	}

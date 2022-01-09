@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/EMus88/go-musthave-shortener-tpl/configs"
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/app/service"
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/repository"
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/repository/models/file"
@@ -54,8 +55,8 @@ func TestHandler_HandlerGet(t *testing.T) {
 			storage.SaveURL("yandex", "https://yandex.ru/search/?text=go&lr=11351&clid=9403")
 			storage.SaveURL("wiki", "https://ru.wikipedia.org/wiki/Go")
 			var model file.Model
-
-			s := service.NewService(storage, &model)
+			config := configs.NewConfigForTest()
+			s := service.NewService(storage, &model, config)
 			h := NewHandler(s)
 
 			router := gin.Default()
