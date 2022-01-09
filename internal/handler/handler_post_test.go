@@ -13,7 +13,6 @@ import (
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/repository"
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/repository/models/file"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"github.com/magiconair/properties/assert"
 )
 
@@ -41,12 +40,7 @@ func TestHandler_HandlerPostText(t *testing.T) {
 			},
 		},
 	}
-	//load env variables
-	if err := godotenv.Load(); err != nil {
-		if err := godotenv.Load("/home/emus/Рабочий стол/Yandex/go-musthave-shortener-tpl/.env"); err != nil {
-			log.Fatalf("error loading env variables: %s", err.Error())
-		}
-	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
@@ -99,12 +93,7 @@ func TestHandler_HandlerPostJSON(t *testing.T) {
 			},
 		},
 	}
-	//load env variables
-	if err := godotenv.Load(); err != nil {
-		if err := godotenv.Load("/home/emus/Рабочий стол/Yandex/go-musthave-shortener-tpl/.env"); err != nil {
-			log.Fatalf("error loading env variables: %s", err.Error())
-		}
-	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
