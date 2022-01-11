@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"os"
 	"strings"
@@ -27,14 +28,14 @@ func NewService(repos *repository.URLStorage, model *file.Model, config *configs
 }
 
 //save long URL in stotage and return short URL
-func (s *Service) SaveURL(value string) string {
+func (s *Service) SaveURL(value string) (string, error) {
 	//save to map
 	key := idgenerator.CreateID()
 	s.Repository.SaveURL(key, value)
 	//save to file
 	file, err := os.OpenFile(s.Config.FileStoragePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 	defer file.Close()
 	s.Model.ID = key
@@ -42,17 +43,20 @@ func (s *Service) SaveURL(value string) string {
 
 	data, err := json.MarshalIndent(s.Model, "", " ")
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 	file.Write(data)
 
-	return key
+	return key, nil
 }
 
 //get long URL from stotage by short URL
-func (s *Service) GetURL(key string) string {
+func (s *Service) GetURL(key string) (string, error) {
 	value := s.Repository.GetURL(key)
-	return value
+	if value == "" {
+		return "", errors.New("URL not found in base")
+	}
+	return value, nil
 }
 
 func (s *Service) LoadFromFile() {

@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -12,8 +12,8 @@ import (
 type Handler struct {
 	service *service.Service
 }
-type LongURL struct {
-	URL string `json:"url"`
+type Request struct {
+	LongURL string `json:"url"`
 }
 type Result struct {
 	Result string `json:"result"`
@@ -26,9 +26,9 @@ func NewHandler(service *service.Service) *Handler {
 //=================================================================
 func (h *Handler) HandlerGet(c *gin.Context) {
 	id := c.Param("id")
-	longURL := h.service.GetURL(id)
-	if longURL == "" {
-		c.String(http.StatusBadRequest, "URL not found")
+	longURL, err := h.service.GetURL(id)
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
 	c.Status(http.StatusTemporaryRedirect)
@@ -39,27 +39,33 @@ func (h *Handler) HandlerGet(c *gin.Context) {
 func (h *Handler) HandlerPostText(c *gin.Context) {
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil || len(body) == 0 {
-		c.Status(http.StatusBadRequest)
+		c.String(http.StatusBadRequest, "Not allowed request")
 		return
 	}
-	id := h.service.SaveURL(string(body))
+	id, err := h.service.SaveURL(string(body))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal error"})
+	}
 	c.String(http.StatusCreated, h.service.Config.BaseURL+"/"+id)
 }
 
 //===================================================================
 func (h *Handler) HandlerPostJSON(c *gin.Context) {
-	if c.GetHeader("content-type") != "application/json" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Not allowed content-type"})
+	var request Request
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Not allowed request"})
 		return
 	}
-	var longURL LongURL
-	jsonData, _ := ioutil.ReadAll(c.Request.Body)
-	if err := json.Unmarshal(jsonData, &longURL); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if request.LongURL == "" || c.GetHeader("content-type") != "application/json" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Not allowed request"})
 		return
 	}
-	id := h.service.SaveURL(longURL.URL)
-	shortURL := h.service.Config.BaseURL + "/" + id
+
+	id, err := h.service.SaveURL(request.LongURL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal error"})
+	}
+	shortURL := fmt.Sprint(h.service.Config.BaseURL, "/", id)
 	var result Result
 	result.Result = shortURL
 	c.JSON(http.StatusCreated, result)
