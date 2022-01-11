@@ -48,19 +48,19 @@ func TestHandler_HandlerGet(t *testing.T) {
 			},
 		},
 	}
+	storage := repository.NewStorage()
+	storage.SaveURL("yandex", "https://yandex.ru/search/?text=go&lr=11351&clid=9403")
+	storage.SaveURL("wiki", "https://ru.wikipedia.org/wiki/Go")
+	var model file.Model
+	config := configs.NewConfigForTest()
+	s := service.NewService(storage, &model, config)
+	h := NewHandler(s)
+
+	router := gin.Default()
+	router.GET("/:id", h.HandlerGet)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			storage := repository.NewStorage()
-			storage.SaveURL("yandex", "https://yandex.ru/search/?text=go&lr=11351&clid=9403")
-			storage.SaveURL("wiki", "https://ru.wikipedia.org/wiki/Go")
-			var model file.Model
-			config := configs.NewConfigForTest()
-			s := service.NewService(storage, &model, config)
-			h := NewHandler(s)
-
-			router := gin.Default()
-			router.GET("/:id", h.HandlerGet)
 
 			req := httptest.NewRequest(http.MethodGet, tt.request, nil)
 			w := httptest.NewRecorder()

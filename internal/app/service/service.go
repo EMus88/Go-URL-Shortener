@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"errors"
 	"log"
 	"os"
 	"strings"
@@ -15,7 +14,7 @@ import (
 
 type Repository interface {
 	SaveURL(key string, value string)
-	GetURL(id string) string
+	GetURL(id string) (string, error)
 }
 type Service struct {
 	Repository
@@ -52,9 +51,9 @@ func (s *Service) SaveURL(value string) (string, error) {
 
 //get long URL from stotage by short URL
 func (s *Service) GetURL(key string) (string, error) {
-	value := s.Repository.GetURL(key)
-	if value == "" {
-		return "", errors.New("URL not found in base")
+	value, err := s.Repository.GetURL(key)
+	if err != nil {
+		return "", err
 	}
 	return value, nil
 }
