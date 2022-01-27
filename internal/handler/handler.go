@@ -21,7 +21,7 @@ type Result struct {
 }
 
 func NewHandler(service *service.Service) *Handler {
-	s
+	//
 	return &Handler{service: service}
 }
 
