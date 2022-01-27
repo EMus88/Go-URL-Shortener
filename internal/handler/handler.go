@@ -11,6 +11,7 @@ import (
 
 type Handler struct {
 	service *service.Service
+	//
 }
 type Request struct {
 	LongURL string `json:"url"`
@@ -20,6 +21,7 @@ type Result struct {
 }
 
 func NewHandler(service *service.Service) *Handler {
+	s
 	return &Handler{service: service}
 }
 
