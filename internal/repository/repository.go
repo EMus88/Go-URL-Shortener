@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/repository/model"
 	"github.com/jackc/pgx/v4"
@@ -63,13 +64,21 @@ func (us *Storage) SaveBatch(list *[]model.Shorten, key string) error {
 	return nil
 }
 
-func (us *Storage) GetURL(key string) string {
+func (us *Storage) GetURL(key string) (string, error) {
 	var longURL string
-	q := `SELECT long_url FROM shortens
+	var isDeleted bool
+	q := `SELECT long_url,is_deleted FROM shortens
 	WHERE
 		url_id=$1;`
-	us.client.QueryRow(context.Background(), q, key).Scan(&longURL)
-	return longURL
+	us.client.QueryRow(context.Background(), q, key).Scan(&longURL, &isDeleted)
+	if isDeleted {
+		return "", errors.New("error: The URL has been deleted")
+	}
+	if longURL == "" {
+		return "", errors.New("error: Not found data")
+	}
+
+	return longURL, nil
 }
 
 func (us *Storage) PingDB() error {
@@ -122,4 +131,29 @@ func (us *Storage) GetList(key string) ([]model.Shorten, error) {
 		return nil, errors.New("Not foud data")
 	}
 	return list, nil
+}
+
+func (us *Storage) DeleteURLs(s []string, key string) error {
+	q := `UPDATE shortens
+		SET is_deleted=true 
+		WHERE
+		url_id=$1 AND
+		session_id=(select id from sessions where session_id =$2);`
+
+	batch := &pgx.Batch{}
+	for _, val := range s {
+		batch.Queue(q, val, key)
+	}
+	br := us.client.SendBatch(context.Background(), batch)
+	defer br.Close()
+	p, err := br.Exec()
+	if err != nil {
+
+		return err
+	}
+	res := strings.Split(p.String(), " ")[1]
+	if res == "0" {
+		return errors.New("error: data wasn't deleted")
+	}
+	return nil
 }

@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -15,12 +14,13 @@ import (
 
 type Repository interface {
 	SaveURL(shortModel *model.Shorten, sessionID string) (string, error)
-	GetURL(id string) string
+	GetURL(id string) (string, error)
 	PingDB() error
 	GetCookie(s string) error
 	SaveCookie(s string) error
 	GetList(key string) ([]model.Shorten, error)
 	SaveBatch(list *[]model.Shorten, sessionID string) error
+	DeleteURLs(s []string, key string) error
 }
 type Service struct {
 	Repository
@@ -67,9 +67,9 @@ func (s *Service) SaveURL(longURL string, sessionID string) (string, error) {
 
 //get long URL from stotage by short URL
 func (s *Service) GetURL(key string) (string, error) {
-	originURL := s.Repository.GetURL(key)
-	if originURL == "" {
-		return "", errors.New("error: not found data")
+	originURL, err := s.Repository.GetURL(key)
+	if err != nil {
+		return "", err
 	}
 	return originURL, nil
 }

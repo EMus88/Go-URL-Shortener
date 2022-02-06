@@ -11,4 +11,5 @@ type Shorten struct {
 	ShortURL  string `gorm:"type:varchar(255);not null" json:"short_url"`
 	LongURL   string `gorm:"type:varchar(255);not null;unique" json:"original_url"`
 	SessionID int    `gorm:"type:int;not null" json:"-"`
+	IsDeleted bool   `gorm:"type:bool; default:false" json:"-"`
 }

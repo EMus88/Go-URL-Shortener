@@ -41,17 +41,15 @@ func main() {
 
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
-
 	router.Use(handler.AuthMiddleware(h))
 
 	router.GET("/:id", h.HandlerURLRelocation)
 	router.GET("user/urls", h.HandlerGetList)
 	router.GET("/ping", h.HandlerPingDB)
-
 	router.POST("/", h.HandlerPostURL)
 	router.POST("/api/shorten", h.HandlerPostURL)
 	router.POST("/api/shorten/batch", h.HandlerSaveBatch)
-
+	router.DELETE("/api/user/urls", h.HandlerDeleteURLs)
 	router.NoRoute(func(c *gin.Context) { c.String(http.StatusBadRequest, "Not allowed requset") })
 
 	log.Println("Routes inited")
