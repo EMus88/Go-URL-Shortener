@@ -72,7 +72,8 @@ func (us *Storage) GetURL(key string) (string, error) {
 		url_id=$1;`
 	us.client.QueryRow(context.Background(), q, key).Scan(&longURL, &isDeleted)
 	if isDeleted {
-		return "", errors.New("error: The URL has been deleted")
+		err := errors.New("error: The URL has been deleted")
+		return "", fmt.Errorf(`%w`, err)
 	}
 	if longURL == "" {
 		return "", errors.New("error: Not found data")

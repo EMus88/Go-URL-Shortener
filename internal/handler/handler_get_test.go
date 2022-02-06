@@ -69,10 +69,10 @@ func Test_HandlerGet(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			//set mock
-			urlRows := mock.NewRows([]string{"long_url"}).
-				AddRow("https://yandex.ru/search/?text=go&lr=11351&clid=9403")
+			urlRows := mock.NewRows([]string{"long_url", "is_deleted"}).
+				AddRow("https://yandex.ru/search/?text=go&lr=11351&clid=9403", false)
 
-			mock.ExpectQuery("SELECT long_url FROM shortens").
+			mock.ExpectQuery("SELECT long_url,is_deleted FROM shortens").
 				WithArgs("yandex").
 				WillReturnRows(urlRows)
 

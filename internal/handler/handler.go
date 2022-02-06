@@ -162,8 +162,13 @@ func (h *Handler) HandlerURLRelocation(c *gin.Context) {
 	id := c.Param("id")
 	longURL, err := h.service.GetURL(id)
 	if err != nil {
-		c.String(http.StatusBadRequest, err.Error())
-		return
+		if errors.Is(err, errors.Unwrap(err)) {
+			c.String(http.StatusGone, err.Error())
+			return
+		} else {
+			c.String(http.StatusBadRequest, err.Error())
+			return
+		}
 	}
 	c.Redirect(http.StatusTemporaryRedirect, longURL)
 }
