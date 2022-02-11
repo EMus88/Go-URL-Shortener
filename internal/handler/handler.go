@@ -248,15 +248,24 @@ func (h *Handler) HandlerPostURL(c *gin.Context) {
 		renderResponse(c, &response)
 	}
 }
+
+//==================================================================
 func (h *Handler) HandlerDeleteURLs(c *gin.Context) {
 	var s []string
 	if err := c.ShouldBindJSON(&s); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Not allowed request"})
 		return
 	}
+
 	key, _ := h.service.Auth.ReadSessionID(h.publicKey)
-	if err := h.service.Repository.DeleteURLs(s, key); err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
-	}
+
+	go func(string, []string) {
+		for _, val := range s {
+			var model model.URL
+			model.ShortURL = val
+			model.SessionID = key
+			h.service.Repository.AddToBuffer(model)
+		}
+	}(key, s)
 	c.Status(http.StatusAccepted)
 }

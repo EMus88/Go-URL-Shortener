@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/repository/model"
 	"github.com/jackc/pgx/v4"
@@ -13,13 +12,14 @@ import (
 
 type Storage struct {
 	client Client
+	Buffer
 }
 
 func NewStorage(client Client) *Storage {
-	return &Storage{client: client}
+	return &Storage{client: client, Buffer: *NewBuffer()}
 }
 
-func (us *Storage) SaveURL(m *model.Shorten, key string) (string, error) {
+func (us *Storage) SaveURL(m *model.URL, key string) (string, error) {
 	var id int
 	var shortURL string
 	q := `INSERT INTO shortens
@@ -43,7 +43,7 @@ func (us *Storage) SaveURL(m *model.Shorten, key string) (string, error) {
 	}
 	return shortURL, nil
 }
-func (us *Storage) SaveBatch(list *[]model.Shorten, key string) error {
+func (us *Storage) SaveBatch(list *[]model.URL, key string) error {
 	q := `INSERT INTO shortens
 	  (url_id,short_url,long_url,session_id)
 	  VALUES
@@ -110,8 +110,8 @@ func (us *Storage) GetCookie(s string) error {
 	return nil
 }
 
-func (us *Storage) GetList(key string) ([]model.Shorten, error) {
-	var list []model.Shorten
+func (us *Storage) GetList(key string) ([]model.URL, error) {
+	var list []model.URL
 	q := `SELECT short_url, long_url 
 		FROM shortens 
 	WHERE 
@@ -121,7 +121,7 @@ func (us *Storage) GetList(key string) ([]model.Shorten, error) {
 		return nil, err
 	}
 	for rows.Next() {
-		var model model.Shorten
+		var model model.URL
 		err := rows.Scan(&model.ShortURL, &model.LongURL)
 		if err != nil {
 			return nil, err
@@ -134,7 +134,7 @@ func (us *Storage) GetList(key string) ([]model.Shorten, error) {
 	return list, nil
 }
 
-func (us *Storage) DeleteURLs(s []string, key string) error {
+func (us *Storage) DeleteURLs(list []model.URL) {
 	q := `UPDATE shortens
 		SET is_deleted=true 
 		WHERE
@@ -142,19 +142,26 @@ func (us *Storage) DeleteURLs(s []string, key string) error {
 		session_id=(select id from sessions where session_id =$2);`
 
 	batch := &pgx.Batch{}
-	for _, val := range s {
-		batch.Queue(q, val, key)
+	for _, val := range list {
+		batch.Queue(q, val.URLID, val.SessionID)
 	}
 	br := us.client.SendBatch(context.Background(), batch)
 	defer br.Close()
-	p, err := br.Exec()
-	if err != nil {
+	br.Exec()
 
-		return err
+}
+
+func (us *Storage) AddToBuffer(m model.URL) {
+	us.Buffer.Mutex.Lock()
+	//add item to buffer
+	us.Buffer.Buffer = append(us.Buffer.Buffer, m)
+	//if buffer is full -> sent to db
+	if cap(us.Buffer.Buffer) == len(us.Buffer.Buffer) {
+		go func(list []model.URL) {
+			us.DeleteURLs(list)
+		}(us.Buffer.Buffer)
+		//clear buffer
+		us.Buffer.Buffer = us.Buffer.Buffer[:0]
 	}
-	res := strings.Split(p.String(), " ")[1]
-	if res == "0" {
-		return errors.New("error: data wasn't deleted")
-	}
-	return nil
+	us.Buffer.Mutex.Unlock()
 }

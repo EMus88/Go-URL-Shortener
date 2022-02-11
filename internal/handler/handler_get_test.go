@@ -96,7 +96,7 @@ func Test_HandlerGet(t *testing.T) {
 func Test_HandlerGetList(t *testing.T) {
 	type want struct {
 		statusCode int
-		list       []model.Shorten
+		list       []model.URL
 	}
 	tests := []struct {
 		name      string
@@ -110,7 +110,7 @@ func Test_HandlerGetList(t *testing.T) {
 			want: want{
 				statusCode: http.StatusOK,
 
-				list: []model.Shorten{
+				list: []model.URL{
 					{ShortURL: "http://localhost:8080/b5a41593cf656026",
 						LongURL: "https://yandex.ru/search/?text=go&lr=11351&clid=9403"},
 					{ShortURL: "http://localhost:8080/b5a41593cfdf6027",
@@ -124,7 +124,7 @@ func Test_HandlerGetList(t *testing.T) {
 
 			want: want{
 				statusCode: http.StatusNoContent,
-				list:       []model.Shorten{},
+				list:       []model.URL{},
 			},
 		},
 	}
