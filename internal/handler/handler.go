@@ -266,9 +266,10 @@ func (h *Handler) HandlerDeleteURLs(c *gin.Context) {
 			model.SessionID = key
 			//h.service.Repository.AddToBuffer(model)
 			m = append(m, model)
-
 		}
 	}(key, s)
+	log.Println(s)
+	log.Println(m)
 	h.service.Repository.DeleteURLs(m)
 	c.Status(http.StatusAccepted)
 }
