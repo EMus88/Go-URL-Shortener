@@ -262,7 +262,7 @@ func (h *Handler) HandlerDeleteURLs(c *gin.Context) {
 	go func(string, []string) {
 		for _, val := range s {
 			var model model.URL
-			model.ShortURL = val
+			model.URLID = val
 			model.SessionID = key
 			h.service.Repository.AddToBuffer(model)
 		}

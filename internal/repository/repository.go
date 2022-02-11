@@ -173,7 +173,7 @@ func (us *Storage) DeleteBufferRefreshing() {
 			us.DeleteBuffer.Buffer = us.DeleteBuffer.Buffer[:0]
 			log.Println("Buffer was cleared by overflow")
 
-		case <-time.After(time.Duration(5) * time.Second):
+		case <-time.After(time.Duration(10) * time.Second):
 			//if time out is over -> sent to db
 			if len(us.DeleteBuffer.Buffer) > 0 {
 
