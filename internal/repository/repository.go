@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/repository/model"
 	"github.com/jackc/pgx/v4"
@@ -155,13 +156,24 @@ func (us *Storage) AddToBuffer(m model.URL) {
 	us.Buffer.Mutex.Lock()
 	//add item to buffer
 	us.Buffer.Buffer = append(us.Buffer.Buffer, m)
-	//if buffer is full -> sent to db
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	ch := make(chan bool)
 	if cap(us.Buffer.Buffer) == len(us.Buffer.Buffer) {
-		go func(list []model.URL) {
-			us.DeleteURLs(list)
-		}(us.Buffer.Buffer)
-		//clear buffer
-		us.Buffer.Buffer = us.Buffer.Buffer[:0]
+		ch <- true
 	}
+	go func(list []model.URL) {
+		for {
+			select {
+			case <-ch:
+				us.DeleteURLs(list)
+			case <-ctx.Done():
+				us.DeleteURLs(list)
+			}
+		}
+	}(us.Buffer.Buffer)
+
 	us.Buffer.Mutex.Unlock()
 }
