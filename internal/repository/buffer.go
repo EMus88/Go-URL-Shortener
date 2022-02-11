@@ -15,3 +15,6 @@ type DeleteBuffer struct {
 func NewDeleteBuffer() *DeleteBuffer {
 	return &DeleteBuffer{Buffer: make([]model.URL, 0, 5)}
 }
+func (buf *DeleteBuffer) ClearBuffer() {
+	buf.Buffer = buf.Buffer[:0]
+}

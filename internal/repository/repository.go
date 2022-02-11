@@ -170,7 +170,7 @@ func (us *Storage) DeleteBufferRefreshing() {
 			//if buffer is full -> sent to db
 			us.DeleteURLs(us.DeleteBuffer.Buffer)
 			//clear buffer
-			us.DeleteBuffer.Buffer = us.DeleteBuffer.Buffer[:0]
+			us.DeleteBuffer.ClearBuffer()
 			log.Println("Buffer was cleared by overflow")
 
 		case <-time.After(time.Duration(10) * time.Second):
@@ -179,7 +179,7 @@ func (us *Storage) DeleteBufferRefreshing() {
 
 				us.DeleteURLs(us.DeleteBuffer.Buffer)
 				//clear buffer
-				us.DeleteBuffer.Buffer = us.DeleteBuffer.Buffer[:0]
+				us.DeleteBuffer.ClearBuffer()
 				log.Println("Buffer was cleared by timeout")
 			}
 		}
