@@ -13,11 +13,11 @@ import (
 
 type Storage struct {
 	client Client
-	Buffer
+	*DeleteBuffer
 }
 
 func NewStorage(client Client) *Storage {
-	return &Storage{client: client, Buffer: *NewBuffer()}
+	return &Storage{client: client, DeleteBuffer: NewDeleteBuffer()}
 }
 
 func (us *Storage) SaveURL(m *model.URL, key string) (string, error) {
@@ -153,27 +153,35 @@ func (us *Storage) DeleteURLs(list []model.URL) {
 }
 
 func (us *Storage) AddToBuffer(m model.URL) {
-	us.Buffer.Mutex.Lock()
+	us.DeleteBuffer.Mutex.Lock()
 	//add item to buffer
-	us.Buffer.Buffer = append(us.Buffer.Buffer, m)
+	us.DeleteBuffer.Buffer = append(us.DeleteBuffer.Buffer, m)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	ch := make(chan bool)
-	if cap(us.Buffer.Buffer) == len(us.Buffer.Buffer) {
-		ch <- true
+	if cap(us.DeleteBuffer.Buffer) == len(us.DeleteBuffer.Buffer) {
+		us.DeleteBuffer.Full <- struct{}{}
 	}
-	go func(list []model.URL) {
-		for {
-			select {
-			case <-ch:
-				us.DeleteURLs(list)
-			case <-ctx.Done():
-				us.DeleteURLs(list)
+	us.DeleteBuffer.Mutex.Unlock()
+}
+
+func (us *Storage) DeleteBufferRefreshing() {
+	for {
+		select {
+		case <-us.DeleteBuffer.Full:
+			//if buffer is full -> sent to db
+			us.DeleteURLs(us.DeleteBuffer.Buffer)
+			//clear buffer
+			us.DeleteBuffer.Buffer = us.DeleteBuffer.Buffer[:0]
+			log.Println("Buffer was cleared by overflow")
+
+		case <-time.After(time.Duration(5) * time.Second):
+			//if time out is over -> sent to db
+			if len(us.DeleteBuffer.Buffer) > 0 {
+
+				us.DeleteURLs(us.DeleteBuffer.Buffer)
+				//clear buffer
+				us.DeleteBuffer.Buffer = us.DeleteBuffer.Buffer[:0]
+				log.Println("Buffer was cleared by timeout")
 			}
 		}
-	}(us.Buffer.Buffer)
-
-	us.Buffer.Mutex.Unlock()
+	}
 }

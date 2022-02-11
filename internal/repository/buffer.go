@@ -6,11 +6,12 @@ import (
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/repository/model"
 )
 
-type Buffer struct {
+type DeleteBuffer struct {
 	Buffer []model.URL
 	Mutex  sync.Mutex
+	Full   chan struct{}
 }
 
-func NewBuffer() *Buffer {
-	return &Buffer{Buffer: make([]model.URL, 0, 5)}
+func NewDeleteBuffer() *DeleteBuffer {
+	return &DeleteBuffer{Buffer: make([]model.URL, 0, 5)}
 }

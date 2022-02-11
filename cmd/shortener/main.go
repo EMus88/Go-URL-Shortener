@@ -35,6 +35,7 @@ func main() {
 	s := service.NewService(r, config)
 	h := handler.NewHandler(s)
 
+	go r.DeleteBufferRefreshing()
 	//initializing router
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
@@ -50,6 +51,7 @@ func main() {
 	router.POST("/api/shorten", h.HandlerPostURL)
 	router.POST("/api/shorten/batch", h.HandlerSaveBatch)
 	router.DELETE("/api/user/urls", h.HandlerDeleteURLs)
+
 	router.NoRoute(func(c *gin.Context) { c.String(http.StatusBadRequest, "Not allowed requset") })
 
 	log.Println("Routes inited")
