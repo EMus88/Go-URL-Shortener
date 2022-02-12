@@ -154,12 +154,16 @@ func (us *Storage) DeleteURLs(list []model.URL) {
 
 func (us *Storage) AddToBuffer(m model.URL) {
 	us.DeleteBuffer.Mutex.Lock()
+
 	//add item to buffer
 	us.DeleteBuffer.Buffer = append(us.DeleteBuffer.Buffer, m)
+	us.DeleteBuffer.LastUpdate = time.Duration(time.Now().Unix())
 
 	if cap(us.DeleteBuffer.Buffer) == len(us.DeleteBuffer.Buffer) {
 		us.DeleteBuffer.Full <- struct{}{}
+		log.Println("Buffer is full")
 	}
+
 	us.DeleteBuffer.Mutex.Unlock()
 }
 
@@ -173,7 +177,7 @@ func (us *Storage) DeleteBufferRefreshing() {
 			us.DeleteBuffer.ClearBuffer()
 			log.Println("Buffer was cleared by overflow")
 
-		case <-time.After(time.Duration(10) * time.Second):
+		case <-time.After(us.DeleteBuffer.LastUpdate + time.Second*10):
 			//if time out is over -> sent to db
 			if len(us.DeleteBuffer.Buffer) > 0 {
 

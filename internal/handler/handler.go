@@ -258,18 +258,16 @@ func (h *Handler) HandlerDeleteURLs(c *gin.Context) {
 	}
 
 	key, _ := h.service.Auth.ReadSessionID(h.publicKey)
-	var m []model.URL
+
 	go func(string, []string) {
 		for _, val := range s {
 			var model model.URL
 			model.URLID = val
 			model.SessionID = key
-			//h.service.Repository.AddToBuffer(model)
-			m = append(m, model)
+			h.service.Repository.AddToBuffer(model)
+			log.Printf("Data was buffered: %v",model)
+
 		}
 	}(key, s)
-	log.Println(s)
-	log.Println(m)
-	h.service.Repository.DeleteURLs(m)
 	c.Status(http.StatusAccepted)
 }
