@@ -10,12 +10,17 @@ import (
 type DeleteBuffer struct {
 	Buffer     []model.URL
 	Mutex      sync.Mutex
-	Full       chan struct{}
+	Signal     chan struct{}
+	Msg        chan string
 	LastUpdate time.Duration
 }
 
 func NewDeleteBuffer() *DeleteBuffer {
-	return &DeleteBuffer{Buffer: make([]model.URL, 0, 10), Full: make(chan struct{})}
+	return &DeleteBuffer{
+		Buffer: make([]model.URL, 0, 10),
+		Signal: make(chan struct{}),
+		Msg:    make(chan string),
+	}
 }
 func (buf *DeleteBuffer) ClearBuffer() {
 	buf.Buffer = buf.Buffer[:0]

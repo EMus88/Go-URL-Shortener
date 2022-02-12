@@ -4,6 +4,9 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/EMus88/go-musthave-shortener-tpl/configs"
 	"github.com/EMus88/go-musthave-shortener-tpl/internal/app/service"
@@ -13,6 +16,8 @@ import (
 
 	_ "github.com/lib/pq"
 )
+
+var done = make(chan os.Signal, 1)
 
 func main() {
 
@@ -57,6 +62,13 @@ func main() {
 	log.Println("Routes inited")
 
 	//start server
-	router.Run(config.ServerAdress)
+	go router.Run(config.ServerAdress)
+	log.Printf("Server started: %s", config.ServerAdress)
 
+	//shutdown
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	<-done
+	r.ShutdownChan <- struct{}{}
+	<-r.DeleteCompleted
+	log.Println("Server stopped")
 }

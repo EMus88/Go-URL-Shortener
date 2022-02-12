@@ -30,7 +30,10 @@ type Service struct {
 }
 
 func NewService(repos *repository.Storage, config *configs.Config) *Service {
-	return &Service{Repository: repos, Config: *config}
+	return &Service{
+		Repository: repos,
+		Config:     *config,
+	}
 }
 
 //save long URL in stotage and return short URL

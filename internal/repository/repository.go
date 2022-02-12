@@ -14,12 +14,20 @@ import (
 type Storage struct {
 	client Client
 	*DeleteBuffer
+	ShutdownChan    chan struct{}
+	DeleteCompleted chan struct{}
 }
 
 func NewStorage(client Client) *Storage {
-	return &Storage{client: client, DeleteBuffer: NewDeleteBuffer()}
+	return &Storage{
+		client:          client,
+		DeleteBuffer:    NewDeleteBuffer(),
+		ShutdownChan:    make(chan struct{}),
+		DeleteCompleted: make(chan struct{}),
+	}
 }
 
+//=====================================================================================================
 func (us *Storage) SaveURL(m *model.URL, key string) (string, error) {
 	var id int
 	var shortURL string
@@ -44,6 +52,8 @@ func (us *Storage) SaveURL(m *model.URL, key string) (string, error) {
 	}
 	return shortURL, nil
 }
+
+//=====================================================================================================
 func (us *Storage) SaveBatch(list *[]model.URL, key string) error {
 	q := `INSERT INTO shortens
 	  (url_id,short_url,long_url,session_id)
@@ -65,6 +75,7 @@ func (us *Storage) SaveBatch(list *[]model.URL, key string) error {
 	return nil
 }
 
+//=====================================================================================================
 func (us *Storage) GetURL(key string) (string, error) {
 	var longURL string
 	var isDeleted bool
@@ -83,10 +94,12 @@ func (us *Storage) GetURL(key string) (string, error) {
 	return longURL, nil
 }
 
+//=====================================================================================================
 func (us *Storage) PingDB() error {
 	return us.client.Ping(context.Background())
 }
 
+//=====================================================================================================
 func (us *Storage) SaveCookie(s string) error {
 	var id int
 	q := `INSERT INTO sessions(session_id)
@@ -99,6 +112,7 @@ func (us *Storage) SaveCookie(s string) error {
 	return nil
 }
 
+//=====================================================================================================
 func (us *Storage) GetCookie(s string) error {
 	var id int
 	q := `SELECT id FROM sessions
@@ -111,6 +125,7 @@ func (us *Storage) GetCookie(s string) error {
 	return nil
 }
 
+//=====================================================================================================
 func (us *Storage) GetList(key string) ([]model.URL, error) {
 	var list []model.URL
 	q := `SELECT short_url, long_url 
@@ -135,7 +150,15 @@ func (us *Storage) GetList(key string) ([]model.URL, error) {
 	return list, nil
 }
 
+//=====================================================================================================
 func (us *Storage) DeleteURLs(list []model.URL) {
+	if len(us.DeleteBuffer.Buffer) == 0 {
+		go func() {
+			us.DeleteCompleted <- struct{}{}
+		}()
+		return
+	}
+
 	q := `UPDATE shortens
 		SET is_deleted=true 
 		WHERE
@@ -149,43 +172,54 @@ func (us *Storage) DeleteURLs(list []model.URL) {
 	br := us.client.SendBatch(context.Background(), batch)
 	defer br.Close()
 	br.Exec()
-
+	go func() {
+		us.DeleteCompleted <- struct{}{}
+	}()
 }
 
+//=====================================================================================================
 func (us *Storage) AddToBuffer(m model.URL) {
 	us.DeleteBuffer.Mutex.Lock()
 
 	//add item to buffer
 	us.DeleteBuffer.Buffer = append(us.DeleteBuffer.Buffer, m)
-	us.DeleteBuffer.LastUpdate = time.Duration(time.Now().Unix())
+
+	go func() {
+		time.Sleep(time.Second * 10)
+		go us.SentMessage("timer")
+		us.DeleteBuffer.Signal <- struct{}{}
+	}()
 
 	if cap(us.DeleteBuffer.Buffer) == len(us.DeleteBuffer.Buffer) {
-		us.DeleteBuffer.Full <- struct{}{}
-		log.Println("Buffer is full")
+		go us.SentMessage("overflow")
+		us.DeleteBuffer.Signal <- struct{}{}
 	}
 
 	us.DeleteBuffer.Mutex.Unlock()
 }
 
+//=====================================================================================================
 func (us *Storage) DeleteBufferRefreshing() {
 	for {
 		select {
-		case <-us.DeleteBuffer.Full:
+		case <-us.DeleteBuffer.Signal:
 			//if buffer is full -> sent to db
+			msg := <-us.DeleteBuffer.Msg
 			us.DeleteURLs(us.DeleteBuffer.Buffer)
+			<-us.DeleteCompleted
 			//clear buffer
 			us.DeleteBuffer.ClearBuffer()
-			log.Println("Buffer was cleared by overflow")
+			log.Println("Buffer was cleared by", msg)
 
-		case <-time.After(us.DeleteBuffer.LastUpdate + time.Second*10):
-			//if time out is over -> sent to db
-			if len(us.DeleteBuffer.Buffer) > 0 {
-
-				us.DeleteURLs(us.DeleteBuffer.Buffer)
-				//clear buffer
-				us.DeleteBuffer.ClearBuffer()
-				log.Println("Buffer was cleared by timeout")
-			}
+		case <-us.ShutdownChan:
+			us.DeleteURLs(us.DeleteBuffer.Buffer)
+			us.DeleteBuffer.ClearBuffer()
+			log.Println("Buffer was cleared by shutdown")
 		}
 	}
+}
+
+//=====================================================================================================
+func (us *Storage) SentMessage(msg string) {
+	us.DeleteBuffer.Msg <- msg
 }
